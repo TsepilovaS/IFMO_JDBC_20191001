@@ -18,7 +18,7 @@ public class SqlQueries {
 
     //Select employees having salary no more than 2000 or no less than 3000
     //language=HSQLDB
-    String select04 = "SELECT * FROM EMPLOYEE WHERE SALARY NOT BETWEEN 2000 AND 3000";
+    String select04 = "SELECT * FROM EMPLOYEE WHERE SALARY <= 2000 OR SALARY >= 3000";
 
     //Select employees assigned to a department and corresponding department name
     //language=HSQLDB
