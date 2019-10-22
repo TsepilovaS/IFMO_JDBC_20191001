@@ -27,25 +27,25 @@ public class SqlQueries {
     //Select all employees and corresponding department name if there is one.
     //Name column containing name of the department "depname".
     //language=HSQLDB
-    String select06 = "SELECT EMPLOYEE.*, DEPARTMENT.NAME as depname "+
-        "FROM EMPLOYEE emp LEFT OUTER JOIN DEPARTMENT D on emp.DEPARTMENT = D.ID";
-
+    String select06 = "SELECT emp.*, D.NAME as depname "+
+            "FROM EMPLOYEE AS emp LEFT OUTER JOIN DEPARTMENT AS D ON emp.DEPARTMENT = D.ID";
     //Select total salary pf all employees. Name it "total".
-    //language=HSQLDB
+    //language=HSQLDB "SELECT EMPLOYEE.*, DEPARTMENT.NAME AS depname "+
+    //        "FROM EMPLOYEE emp LEFT OUTER JOIN DEPARTMENT D on emp.DEPARTMENT = D.ID"
     String select07 = "SELECT SUM(SALARY) AS TOTAL FROM EMPLOYEE";
 
     //Select all departments and amount of employees assigned per department
     //Name column containing name of the department "depname".
     //Name column containing employee amount "staff_size".
     //language=HSQLDB
-    String select08 = "SELECT DEPARTMENT.NAME AS depname, COUNT(EMPLOYEE.ID) AS staff_size "+
+    String select08 = "SELECT D.NAME AS depname, COUNT(emp.ID) AS staff_size "+
             "FROM DEPARTMENT D INNER JOIN EMPLOYEE emp on emp.DEPARTMENT = D.id "+
             "GROUP BY D.NAME";
 
     //Select all departments and values of total and average salary per department
     //Name column containing name of the department "depname".
     //language=HSQLDB
-    String select09 = "SELECT DEPARTMENT.NAME AS depname, SUM(EMPLOYEE.SALARY) AS total, AVG(EMPLOYEE.SALARY) AS average "+
+    String select09 = "SELECT D.NAME AS depname, SUM(emp.SALARY) AS total, AVG(emp.SALARY) AS average "+
             "FROM DEPARTMENT D INNER JOIN EMPLOYEE emp on emp.DEPARTMENT = D.id "+
             "GROUP BY D.NAME";
 
