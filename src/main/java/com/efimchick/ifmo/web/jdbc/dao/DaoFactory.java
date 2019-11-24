@@ -17,27 +17,8 @@ import java.util.*;
 
 public class DaoFactory {
 
-    List<Employee> employees;
-
-    {
-        try {
-            employees = getEmployees();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-    List<Department> departments;
-
-    {
-        try {
-            departments = getDepartments();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
     public List<Employee> mapSet(ResultSet res) throws SQLException {
+        res.beforeFirst();
         List<Employee> emp = new ArrayList<>();
         try {
             while (res.next()) {
@@ -49,7 +30,6 @@ public class DaoFactory {
         }
         return emp;
     }
-
 
     public Employee getEmp(ResultSet res) {
         try {
@@ -83,24 +63,15 @@ public class DaoFactory {
         }
     }
 
-    private List<Employee> getEmployees() throws SQLException {
+    private ResultSet getResultSet(String SQL) throws SQLException {
         ConnectionSource connectionSource = ConnectionSource.instance();
         Connection connection = connectionSource.createConnection();
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM EMPLOYEE");
-        return mapSet(resultSet);
+        Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_UPDATABLE);
+        return statement.executeQuery(SQL);
     }
 
-    private List<Department> getDepartments() throws SQLException {
-        ConnectionSource connectionSource = ConnectionSource.instance();
-        Connection connection = connectionSource.createConnection();
-        Statement statement = connection.createStatement();
-        ResultSet resultSet = statement.executeQuery("SELECT * FROM DEPARTMENT");
-        return getdepartments(resultSet);
-
-    }
-
-    private List<Department> getdepartments(ResultSet resultSet) {
+    private List<Department> getdepartments(ResultSet resultSet) throws SQLException {
+        resultSet.beforeFirst();
         List<Department> departments = new ArrayList<>();
         try {
             while (resultSet.next()) {
@@ -121,50 +92,77 @@ public class DaoFactory {
         return new EmployeeDao() {
             @Override
             public List<Employee> getByDepartment(Department department) {
-                List<Employee> list = new ArrayList<>();
-                for (int i = 0; i < employees.size(); ++i) {
-                    if (employees.get(i).getDepartmentId().equals(department.getId())) {
-                        list.add(employees.get(i));
-                    }
+                try {
+                    ResultSet res = getResultSet("select * from employee where department = " + department.getId());
+                    return mapSet(res);
+                } catch (SQLException e) {
                 }
-                return list;
+                return null;
             }
 
             @Override
             public List<Employee> getByManager(Employee employee) {
-                List<Employee> list = new ArrayList<>();
-                for (int i = 0; i < employees.size(); i++) {
-                    if (employees.get(i).getManagerId().equals(employee.getId())) {
-                        list.add(employees.get(i));
-                    }
+                try {
+                    ResultSet res = getResultSet("select * from employee where manager = " + employee.getId());
+                    return mapSet(res);
+                } catch (SQLException e) {
                 }
-                return list;
+                return null;
             }
 
             @Override
             public Optional<Employee> getById(BigInteger Id) {
-                for (int i = 0; i < employees.size(); i++) {
-                    if (employees.get(i).getId().equals(Id)) {
-                        return Optional.of(employees.get(i));
+                try {
+                    ResultSet res = getResultSet("select * from employee where id = " + Id.intValue());
+                    if (res.next() == false){
+                        return Optional.empty();
+                    } else {
+                        List<Employee> emp = mapSet(res);
+                        return Optional.of(emp.get(0));
                     }
+                } catch (SQLException e) {
+                    return Optional.empty();
                 }
-                return Optional.empty();
             }
 
             @Override
             public List<Employee> getAll() {
-                return employees;
+                try {
+                    return mapSet(getResultSet("select * from employee"));
+                } catch (SQLException e) {
+                }
+                return null;
             }
 
             @Override
             public Employee save(Employee employee) {
-                employees.add(employee);
+                try {
+                    ConnectionSource connectionSource = ConnectionSource.instance();
+                    Connection connection = connectionSource.createConnection();
+                    connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE).executeUpdate("insert into employee values('"
+                            + employee.getId() + "', '"
+                            + employee.getFullName().getFirstName() + "', '"
+                            + employee.getFullName().getLastName() + "', '"
+                            + employee.getFullName().getMiddleName() + "', '"
+                            + employee.getPosition() + "', '"
+                            + employee.getManagerId() + "', '"
+                            + employee.getHired() + "', '"
+                            + employee.getSalary() + "', '"
+                            + employee.getDepartmentId() + "')");
+                } catch (SQLException e) {
+                }
                 return employee;
             }
 
             @Override
             public void delete(Employee employee) {
-                employees.remove(employee);
+                try {
+                    ConnectionSource connectionSource = ConnectionSource.instance();
+                    Connection connection = connectionSource.createConnection();
+                    connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE).executeUpdate("delete from employee where id = " + employee.getId());
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         };
     }
@@ -173,33 +171,60 @@ public class DaoFactory {
         return new DepartmentDao() {
             @Override
             public Optional<Department> getById(BigInteger Id) {
-                for (int i = 0; i < departments.size(); i++) {
-                    if (departments.get(i).getId().equals(Id)) {
-                        return Optional.of(departments.get(i));
+                try {
+                    ResultSet res = getResultSet("select * from department where id = " + Id);
+                    if (res.next() == false) {
+                        return Optional.empty();
+                    } else {
+                        List<Department> dep = getdepartments(res);
+                        return Optional.of(dep.get(0));
                     }
+                } catch (SQLException e) {
+                    return Optional.empty();
                 }
-                return Optional.empty();
             }
 
             @Override
             public List<Department> getAll() {
-                return departments;
+                try {
+                    return getdepartments(getResultSet("select * from department"));
+                } catch (SQLException e) {
+                }
+                return null;
             }
 
             @Override
-            public Department save(Department department) {
-                for (int i = 0; i < departments.size(); i++) {
-                    if (departments.get(i).getId().equals(department.getId())) {
-                        departments.remove(departments.get(i));
-                    }
+            public Department save(Department department) { ;
+                Optional<Department> optDep = getById(department.getId());
+                String SQL="update department set name = '"
+                        + department.getName() + "',"
+                        + " location = '" + department.getLocation()
+                        + "' where id = '" + department.getId() + "'";
+                if (!optDep.isPresent()) {
+                    SQL = "insert into department values('"
+                            + department.getId() + "', '"
+                            + department.getName() + "', '"
+                            + department.getLocation() + "')";
                 }
-                departments.add(department);
+                try {
+                    ConnectionSource connectionSource = ConnectionSource.instance();
+                    Connection connection = connectionSource.createConnection();
+                    connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE).executeUpdate(SQL);
+                } catch (SQLException e) {
+                    e.printStackTrace();
+                }
                 return department;
             }
 
             @Override
             public void delete(Department department) {
-                departments.remove(department);
+                try {
+                    ConnectionSource connectionSource = ConnectionSource.instance();
+                    Connection connection = connectionSource.createConnection();
+                    connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE).executeUpdate("delete from department where id = " + department.getId());
+                }catch (SQLException e) {
+                    e.printStackTrace();
+                }
             }
         };
     }
