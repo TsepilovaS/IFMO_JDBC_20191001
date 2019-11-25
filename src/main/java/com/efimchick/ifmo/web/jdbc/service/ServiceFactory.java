@@ -14,30 +14,18 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.time.LocalDate;
 import java.util.ArrayList;
-import java.util.LinkedList;
 import java.util.List;
 
 public class ServiceFactory {
 
-    ResultSet getRS(String s) throws SQLException {
+    private ResultSet getRS(String s) throws SQLException {
         ConnectionSource connectionSource = ConnectionSource.instance();
         Connection connection = connectionSource.createConnection();
         Statement statement = connection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
         return statement.executeQuery(s);
     }
 
-    List<Department> departments;
-
-    {
-        try {
-            departments = getDepartments();
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    public Employee getEmpWithoutChain(ResultSet res, int level) {
+    private Employee getEmpWithoutChain(ResultSet res, int level) {
         try {
             level++;
             if (level > 2)
@@ -67,6 +55,7 @@ public class ServiceFactory {
         }
     }
 
+
     private Department getDepartmentById(String department) {
         if (department == null)
             return null;
@@ -84,13 +73,13 @@ public class ServiceFactory {
 
 
 
+
     private List<Department> getDepartments() throws SQLException {
         ConnectionSource connectionSource = ConnectionSource.instance();
         Connection connection = connectionSource.createConnection();
         Statement statement = connection.createStatement();
         ResultSet resultSet = statement.executeQuery("SELECT * FROM DEPARTMENT");
         return getdepartments(resultSet);
-
     }
 
     private List<Department> getdepartments(ResultSet resultSet) {
@@ -109,14 +98,14 @@ public class ServiceFactory {
         }
         return departments;
     }
-
+/*
     List<Employee> page(List<Employee> list, Paging paging){
         List<Employee> res = new LinkedList<>();
         for (int i = (paging.page - 1) * paging.itemPerPage; i<Math.min((paging.page) * paging.itemPerPage, list.size()); ++i){
             res.add(list.get(i));
         }
         return res;
-    }
+    }*/
 
 
     public EmployeeService employeeService() {
@@ -124,27 +113,22 @@ public class ServiceFactory {
             @Override
             public List<Employee> getAllSortByHireDate(Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY HIREDATE");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet res = getRS("select * from employee order by hiredate"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(res);
                 } catch (SQLException e) {
-                    e.printStackTrace();
+                    return null;
                 }
-                return null;
             }
 
             @Override
             public List<Employee> getAllSortByLastname(Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY LASTNAME");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY LASTNAME"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -154,12 +138,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getAllSortBySalary(Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY SALARY");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY SALARY"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -169,12 +151,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getAllSortByDepartmentNameAndLastname(Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY DEPARTMENT,LASTNAME");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE ORDER BY DEPARTMENT,LASTNAME"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -184,12 +164,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getByDepartmentSortByHireDate(Department department, Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = "+department.getId()+ " ORDER BY HIREDATE");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = "+department.getId()+ " ORDER BY HIREDATE"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -199,12 +177,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getByDepartmentSortBySalary(Department department, Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = "+department.getId()+ " ORDER BY SALARY");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = "+department.getId()+ " ORDER BY SALARY"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -214,12 +190,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getByDepartmentSortByLastname(Department department, Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = "+department.getId()+ " ORDER BY LASTNAME");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE DEPARTMENT = "+department.getId()+ " ORDER BY LASTNAME"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -229,12 +203,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getByManagerSortByLastname(Employee manager, Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE MANAGER = "+manager.getId()+ " ORDER BY LASTNAME");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE MANAGER = "+manager.getId()+ " ORDER BY LASTNAME"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -244,12 +216,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getByManagerSortByHireDate(Employee manager, Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE MANAGER = "+manager.getId()+ " ORDER BY HIREDATE");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE MANAGER = "+manager.getId()+ " ORDER BY HIREDATE"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -259,12 +229,10 @@ public class ServiceFactory {
             @Override
             public List<Employee> getByManagerSortBySalary(Employee manager, Paging paging) {
                 try {
-                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE MANAGER = "+manager.getId()+ " ORDER BY SALARY");
-                    List<Employee> employees = new ArrayList<>();
-                    while (rs.next()){
-                        employees.add(getEmpWithoutChain(rs, 0));
-                    }
-                    return page(employees, paging);
+                    ResultSet rs = getRS("SELECT * FROM EMPLOYEE WHERE MANAGER = "+manager.getId()+ " ORDER BY SALARY"+
+                            " limit " + paging.itemPerPage +
+                            " offset " + paging.itemPerPage * (paging.page - 1));
+                    return getEmployeesWithoutChain(rs);
                 } catch (SQLException e) {
                     e.printStackTrace();
                 }
@@ -304,7 +272,7 @@ public class ServiceFactory {
         };
     }
 
-    List<Employee> getEmployeesWithChain(ResultSet resultSet){
+    private List<Employee> getEmployeesWithChain(ResultSet resultSet){
         List<Employee> employees = new ArrayList<>();
         while (true){
             try {
@@ -313,6 +281,19 @@ public class ServiceFactory {
                 e.printStackTrace();
             }
             employees.add(getEmpWithChain(resultSet));
+        }
+        return employees;
+    }
+
+    private List<Employee> getEmployeesWithoutChain(ResultSet resultSet){
+        List<Employee> employees = new ArrayList<>();
+        while (true){
+            try {
+                if (!resultSet.next()) break;
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+            employees.add(getEmpWithoutChain(resultSet, 0));
         }
         return employees;
     }
